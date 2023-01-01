@@ -43,6 +43,8 @@ pub fn generate_scope_from_struct_defs(struct_defs: Vec<StructDef>) -> Scope {
 
     for struct_def in struct_defs.iter() {
         let mut func = Function::new("get_structs");
+        func.vis("pub");
+        func.ret(codegen::Type::new("StructDef"));
         func.line(generate_string_from_struct_def(struct_def));
         scope.push_fn(func);
     }
@@ -86,7 +88,7 @@ mod tests {
         let code = generate_format(get_code());
         assert_eq!(code, "use rusto::def::*;
 
-fn get_structs() {
+pub fn get_structs() -> StructDef {
     StructDef {
             name: \"Person\".to_string(),
             fields: vec![StructField {

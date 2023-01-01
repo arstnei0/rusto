@@ -1,6 +1,13 @@
 [package]
 name = "rusto"
-version = "0.1.0"
+version = "0.0.1"
+authors = ["Zihan Chen"]
+documentation = "https://docs.rs/rusto"
+repository = "https://github.com/zihan-ch/rusto"
+keywords = ["codegen", "type"]
+categories = ["compilers"]
+license = "MIT"
+description = "Generate types of types."
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
