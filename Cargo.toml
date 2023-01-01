@@ -1,0 +1,12 @@
+[package]
+name = "rusto"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+codegen = "*"
+quote = "*"
+syn = { version = "*", features = ["full", "visit"] }
+proc-macro2 = "*"
