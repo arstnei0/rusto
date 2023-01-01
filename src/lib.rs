@@ -1,10 +1,11 @@
 #![allow(unused_imports)]
 #![allow(unused_variables)]
 extern crate syn;
+
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use syn::visit::{self, Visit};
-use syn::{DataStruct, File, ItemFn, ItemStruct, Token};
+use syn::{DataStruct, File, GenericArgument, ItemFn, ItemStruct, Token};
 
 struct StructVisitor {
     pub struct_defs: Vec<StructDef>,
@@ -33,26 +34,46 @@ impl<'ast> Visit<'ast> for StructVisitor {
                         syn::Type::Path(path) => {
                             let path = path.path.clone();
                             let mut segs = path.segments.into_iter();
-                            let field_ty = segs.next().unwrap().ident.to_owned().to_string();
-                            if field_ty == "Vec" {
-                                let inner_ty = segs.next();
+                            let field_ty = segs.next().unwrap();
+                            let field_ty_ident = field_ty.ident.to_owned().to_string();
+
+                            if field_ty_ident == "Vec" {
+                                let inner_ty = field_ty.arguments.to_owned();
                                 match inner_ty {
-                                    Some(field_ty) => struct_fields.push(StructField {
-                                        name: field_name,
-                                        ty: Type::Vec(Box::new(Type::Atom(
-                                            field_ty.ident.to_owned().to_string(),
-                                        ))),
-                                    }),
-                                    None => panic!("The Type inside the Vec not found!"),
+                                    syn::PathArguments::AngleBracketed(args) => {
+                                        let generic = args.args.last().unwrap();
+                                        if let GenericArgument::Type(ty) = generic {
+                                            match ty {
+                                                syn::Type::Path(path) => {
+                                                    let path = path.path.to_owned();
+                                                    let mut segs = path.segments.into_iter();
+                                                    let inner_ty = segs.next().unwrap();
+                                                    let inner_ty_ident =
+                                                        inner_ty.ident.to_owned().to_string();
+
+                                                    struct_fields.push(StructField {
+                                                        name: field_name,
+                                                        ty: Type::Vec(Box::new(Type::Atom(
+                                                            inner_ty_ident,
+                                                        ))),
+                                                    })
+                                                }
+                                                _ => panic!("The generic type is illegal!"),
+                                            }
+                                        } else {
+                                            panic!("The generic is not a type!")
+                                        }
+                                    }
+                                    _ => panic!("Not providing the Vec generic!"),
                                 }
                             } else {
                                 struct_fields.push(StructField {
                                     name: field_name,
-                                    ty: Type::Atom(field_ty),
+                                    ty: Type::Atom(field_ty_ident),
                                 });
                             }
                         }
-                        _ => (),
+                        _ => panic!("The field type is illegal!"),
                     }
                 }
             }
@@ -184,7 +205,10 @@ mod tests {
             struct_defs,
             vec![StructDef {
                 name: "Student".to_string(),
-                fields: Vec::new()
+                fields: vec![StructField {
+                    name: "marks".to_string(),
+                    ty: Type::Vec(Box::new(Type::Atom("u32".to_string())))
+                }]
             }]
         )
     }
